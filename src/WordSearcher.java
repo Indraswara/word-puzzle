@@ -48,33 +48,72 @@ public class WordSearcher {
         if (index == word.length()) {
             return true;
         }
-
+    
         // Check bounds and visited nodes
         if (row < 0 || row >= matrix.length || col < 0 || col >= matrix[0].length ||
             visited.contains(matrix[row][col]) || matrix[row][col] != word.charAt(index)) {
             return false;
         }
-
+    
         // Mark current position as visited
         visited.add(matrix[row][col]);
         path.add(new int[]{row, col});
-
+    
         // Define possible moves (8 directions: horizontal, vertical, diagonal)
-        int[] dRow = {-1, -1, -1, 0, 0, 1, 1, 1};
-        int[] dCol = {-1, 0, 1, -1, 1, -1, 0, 1};
-
-        // Explore neighbors
-        for (int d = 0; d < 8; d++) {
+        int[] dRow = {-1, 1, 0, 0, -1, -1, 1, 1};
+        int[] dCol = {0, 0, -1, 1, -1, 1, -1, 1};
+    
+        // Explore neighbors in the same direction as the first move
+        if (index == 0) {
+            char firstChar = word.charAt(0);
+            for (int d = 0; d < 8; d++) {
+                if (dfs(row + dRow[d], col + dCol[d], word, 1, visited, path)) {
+                    return true;
+                }
+            }
+        } else if (index > 0 && index < path.size()) {
+            int currentDirection = getDirection(path.get(index), path.get(index - 1));
+            int d = currentDirection;
             if (dfs(row + dRow[d], col + dCol[d], word, index + 1, visited, path)) {
                 return true;
             }
         }
-
+    
         // Backtrack
         visited.remove(matrix[row][col]);
         path.remove(path.size() - 1);
-
+    
         return false;
+    }
+    
+    private int getDirection(int[] currentPos, int[] prevPos) {
+        if (prevPos == null || prevPos.length != 2) {
+            return -1; // Invalid direction
+        }
+    
+        int dRow = currentPos[0] - prevPos[0];
+        int dCol = currentPos[1] - prevPos[1];
+    
+        // Determine direction based on the difference in row and column
+        if (dRow == 0 && dCol == -1) {
+            return 2; // Left
+        } else if (dRow == 0 && dCol == 1) {
+            return 3; // Right
+        } else if (dRow == -1 && dCol == 0) {
+            return 0; // Up
+        } else if (dRow == 1 && dCol == 0) {
+            return 1; // Down
+        } else if (dRow == -1 && dCol == -1) {
+            return 4; // Top-left
+        } else if (dRow == -1 && dCol == 1) {
+            return 5; // Top-right
+        } else if (dRow == 1 && dCol == -1) {
+            return 6; // Bottom-left
+        } else if (dRow == 1 && dCol == 1) {
+            return 7; // Bottom-right
+        } else {
+            return -1; // Invalid direction
+        }
     }
 
     private void markFoundPath(List<int[]> path) {
@@ -90,9 +129,9 @@ public class WordSearcher {
             for (int j = 0; j < matrix[0].length; j++) {
                 char currentChar = matrix[i][j];
                 if (Character.isLowerCase(currentChar)) {
-                    System.out.print(ANSI_YELLOW + currentChar + " " + ANSI_RESET);
+                    System.out.print(ANSI_YELLOW + Character.toUpperCase(currentChar) + " " + ANSI_RESET);
                 } else {
-                    System.out.print(ANSI_CYAN + currentChar + " " + ANSI_RESET);
+                    System.out.print(ANSI_CYAN + Character.toUpperCase(currentChar) + " " + ANSI_RESET);
                 }
             }
             System.out.println();
