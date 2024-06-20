@@ -44,26 +44,21 @@ public class WordSearcher {
     }
 
     private boolean dfs(int row, int col, String word, int index, Set<Character> visited, List<int[]> path) {
-        // Base case: If entire word is matched
         if (index == word.length()) {
             return true;
         }
     
-        // Check bounds and visited nodes
         if (row < 0 || row >= matrix.length || col < 0 || col >= matrix[0].length ||
             visited.contains(matrix[row][col]) || matrix[row][col] != word.charAt(index)) {
             return false;
         }
     
-        // Mark current position as visited
         visited.add(matrix[row][col]);
         path.add(new int[]{row, col});
     
-        // Define possible moves (8 directions: horizontal, vertical, diagonal)
         int[] dRow = {-1, 1, 0, 0, -1, -1, 1, 1};
         int[] dCol = {0, 0, -1, 1, -1, 1, -1, 1};
     
-        // Explore neighbors in the same direction as the first move
         if (index == 0) {
             char firstChar = word.charAt(0);
             for (int d = 0; d < 8; d++) {
@@ -79,7 +74,6 @@ public class WordSearcher {
             }
         }
     
-        // Backtrack
         visited.remove(matrix[row][col]);
         path.remove(path.size() - 1);
     
@@ -94,7 +88,6 @@ public class WordSearcher {
         int dRow = currentPos[0] - prevPos[0];
         int dCol = currentPos[1] - prevPos[1];
     
-        // Determine direction based on the difference in row and column
         if (dRow == 0 && dCol == -1) {
             return 2; // Left
         } else if (dRow == 0 && dCol == 1) {
