@@ -1,10 +1,16 @@
+import java.io.IOException;
 import java.util.*;
 
 public class WordSearcher {
     private Map<Character, Vector<Character>> graph;
+    private char[][] matrix;
+    private static final String ANSI_RESET = "\u001B[0m";
+    private static final String ANSI_YELLOW = "\u001B[33m";
+    private static final String ANSI_CYAN = "\u001B[36m";
 
-    public WordSearcher(Map<Character, Vector<Character>> graph) {
+    public WordSearcher(Map<Character, Vector<Character>> graph, char[][] matrix) {
         this.graph = graph;
+        this.matrix = matrix;
     }
 
     public List<String> findWords(List<String> words) {
@@ -15,15 +21,21 @@ public class WordSearcher {
             boolean wordFound = false;
 
             // Search for all occurrences of the starting character
-            for (Map.Entry<Character, Vector<Character>> entry : graph.entrySet()) {
-                char currentChar = entry.getKey();
-                if (currentChar == startChar) {
-                    // Perform DFS to check if the word exists starting from this character
-                    if (dfs(entry.getKey(), word, 0, new HashSet<>())) {
-                        foundWords.add(word);
-                        wordFound = true;
-                        break; // Move to the next word
+            for (int i = 0; i < matrix.length; i++) {
+                for (int j = 0; j < matrix[0].length; j++) {
+                    if (matrix[i][j] == startChar) {
+                        // Perform DFS to check if the word exists starting from this position
+                        List<int[]> path = new ArrayList<>();
+                        if (dfs(i, j, word, 0, new HashSet<>(), path)) {
+                            foundWords.add(word);
+                            wordFound = true;
+                            markFoundPath(path);
+                            break; // Move to the next word
+                        }
                     }
+                }
+                if (wordFound) {
+                    break; // Move to the next word
                 }
             }
         }
@@ -31,51 +43,80 @@ public class WordSearcher {
         return foundWords;
     }
 
-    private boolean dfs(char currentChar, String word, int index, Set<Character> visited) {
+    private boolean dfs(int row, int col, String word, int index, Set<Character> visited, List<int[]> path) {
         // Base case: If entire word is matched
         if (index == word.length()) {
             return true;
         }
 
-        // If current character doesn't match or is already visited
-        if (currentChar != word.charAt(index) || visited.contains(currentChar)) {
+        // Check bounds and visited nodes
+        if (row < 0 || row >= matrix.length || col < 0 || col >= matrix[0].length ||
+            visited.contains(matrix[row][col]) || matrix[row][col] != word.charAt(index)) {
             return false;
         }
 
-        // Mark current character as visited
-        visited.add(currentChar);
+        // Mark current position as visited
+        visited.add(matrix[row][col]);
+        path.add(new int[]{row, col});
 
-        // Explore neighbors (horizontal, vertical, diagonal)
-        for (char neighbor : graph.get(currentChar)) {
-            if (dfs(neighbor, word, index + 1, visited)) {
-                return true; // If word found in this path, return true
+        // Define possible moves (8 directions: horizontal, vertical, diagonal)
+        int[] dRow = {-1, -1, -1, 0, 0, 1, 1, 1};
+        int[] dCol = {-1, 0, 1, -1, 1, -1, 0, 1};
+
+        // Explore neighbors
+        for (int d = 0; d < 8; d++) {
+            if (dfs(row + dRow[d], col + dCol[d], word, index + 1, visited, path)) {
+                return true;
             }
         }
 
-        // Backtrack: Unmark current character
-        visited.remove(currentChar);
+        // Backtrack
+        visited.remove(matrix[row][col]);
+        path.remove(path.size() - 1);
 
         return false;
+    }
+
+    private void markFoundPath(List<int[]> path) {
+        for (int[] pos : path) {
+            int row = pos[0];
+            int col = pos[1];
+            matrix[row][col] = Character.toLowerCase(matrix[row][col]); // Convert to lowercase
+        }
+    }
+
+    public void printMatrix() {
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[0].length; j++) {
+                char currentChar = matrix[i][j];
+                if (Character.isLowerCase(currentChar)) {
+                    System.out.print(ANSI_YELLOW + currentChar + " " + ANSI_RESET);
+                } else {
+                    System.out.print(ANSI_CYAN + currentChar + " " + ANSI_RESET);
+                }
+            }
+            System.out.println();
+        }
     }
 
     public static void main(String[] args) {
         // Example usage:
         Parser parser = new Parser("../data/test.txt");
         Map<Character, Vector<Character>> graph = null;
+        char[][] matrix = null;
         try {
             graph = parser.buildGraph();
-        } catch (Exception e) {
+            matrix = parser.getMatrix();
+        } catch (IOException e) {
             e.printStackTrace();
             return;
         }
 
-        WordSearcher wordSearcher = new WordSearcher(graph);
+        WordSearcher wordSearcher = new WordSearcher(graph, matrix);
 
-        List<String> wordsToSearch = Arrays.asList(
-            "MARSHALL", "MANHATTAN", "MOSBY", "TED", "TEACHER",
-                "SLAPSGIVING", "BARNEY", "LAWYER", "LILY", "ERIKSEN",
-                "STINSON", "PRESENTER", "ALDRIN", "ROBIN"
-            );
+        List<String> wordsToSearch = Arrays.asList("MARSHALL", "MANHATTAN", "MOSBY", "TED", "TEACHER",
+                                                   "SLAPSGIVING", "BARNEY", "LAWYER", "LILY", "ERIKSEN",
+                                                   "STINSON", "PRESENTER", "ALDRIN", "ROBIN");
 
         List<String> foundWords = wordSearcher.findWords(wordsToSearch);
 
@@ -83,5 +124,8 @@ public class WordSearcher {
         for (String word : foundWords) {
             System.out.println(word);
         }
+
+        System.out.println("\nMatrix with found words highlighted:");
+        wordSearcher.printMatrix();
     }
 }
