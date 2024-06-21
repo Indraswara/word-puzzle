@@ -1,9 +1,8 @@
-import java.io.IOException;
 import java.util.*;
 
 public class WordSearcher {
     private Map<Character, Vector<Character>> graph;
-    private char[][] matrix;
+    private final char[][] matrix;
     private static final String ANSI_RESET = "\u001B[0m";
     private static final String ANSI_YELLOW = "\u001B[33m";
     private static final String ANSI_CYAN = "\u001B[36m";
@@ -118,9 +117,9 @@ public class WordSearcher {
     }
 
     public void printMatrix() {
-        for (int i = 0; i < matrix.length; i++) {
+        for (char[] matrix1 : matrix) {
             for (int j = 0; j < matrix[0].length; j++) {
-                char currentChar = matrix[i][j];
+                char currentChar = matrix1[j];
                 if (Character.isLowerCase(currentChar)) {
                     System.out.print(ANSI_YELLOW + Character.toUpperCase(currentChar) + " " + ANSI_RESET);
                 } else {
@@ -129,35 +128,5 @@ public class WordSearcher {
             }
             System.out.println();
         }
-    }
-
-    public static void main(String[] args) {
-        // Example usage:
-        Parser parser = new Parser("../data/large-1.txt", "../data/large-1-words.txt");
-        Map<Character, Vector<Character>> graph = null;
-        List<String> wordsToSearch = null;
-        char[][] matrix = null;
-
-        try {
-            graph = parser.buildGraph();
-            matrix = parser.getMatrix();
-            wordsToSearch = parser.generateWordsFromFile();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
-
-        WordSearcher wordSearcher = new WordSearcher(graph, matrix);
-
-
-        List<String> foundWords = wordSearcher.findWords(wordsToSearch);
-
-        System.out.println("Words found:");
-        for (String word : foundWords) {
-            System.out.println(word);
-        }
-
-        System.out.println("\nMatrix with found words highlighted:");
-        wordSearcher.printMatrix();
     }
 }
