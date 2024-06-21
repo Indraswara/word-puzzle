@@ -5,11 +5,13 @@ import java.util.*;
 
 public class Parser {
     private String filename;
+    private String filename_words;
     private Map<Character, Vector<Character>> graph;
     private char[][] matrix;
 
-    public Parser(String filename) {
+    public Parser(String filename, String filename_words) {
         this.filename = filename;
+        this.filename_words = filename_words;
         this.graph = new HashMap<>();
     }
 
@@ -78,8 +80,34 @@ public class Parser {
 
         return graph;
     }
+    
+    public List<String> generateWordsFromFile() {
+        List<String> wordList = new ArrayList<>();
 
+        try (BufferedReader br = new BufferedReader(new FileReader(filename_words))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                System.out.println(line);
+                wordList.add(line.trim());
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading file: " + e.getMessage());
+        }
+
+        return wordList;
+    }
     public char[][] getMatrix() {
         return matrix;
     }
+
+
+    public static void main(String[] args){
+        try{
+            Parser parser = new Parser("../data/test.txt", "../data/test-words.txt"); 
+            parser.buildGraph();
+        }catch(Exception e){
+            System.err.println(e);
+        }
+    }
+
 }

@@ -133,12 +133,15 @@ public class WordSearcher {
 
     public static void main(String[] args) {
         // Example usage:
-        Parser parser = new Parser("../data/test.txt");
+        Parser parser = new Parser("../data/large-1.txt", "../data/large-1-words.txt");
         Map<Character, Vector<Character>> graph = null;
+        List<String> wordsToSearch = null;
         char[][] matrix = null;
+
         try {
             graph = parser.buildGraph();
             matrix = parser.getMatrix();
+            wordsToSearch = parser.generateWordsFromFile();
         } catch (IOException e) {
             e.printStackTrace();
             return;
@@ -146,9 +149,6 @@ public class WordSearcher {
 
         WordSearcher wordSearcher = new WordSearcher(graph, matrix);
 
-        List<String> wordsToSearch = Arrays.asList("MARSHALL", "MANHATTAN", "MOSBY", "TED", "TEACHER",
-                                                   "SLAPSGIVING", "BARNEY", "LAWYER", "LILY", "ERIKSEN",
-                                                   "STINSON", "PRESENTER", "ALDRIN", "ROBIN");
 
         List<String> foundWords = wordSearcher.findWords(wordsToSearch);
 
