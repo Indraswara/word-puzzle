@@ -50,11 +50,9 @@ Welcome to the Word Puzzle application! This program allows you to search for wo
     PERIMETER
     GEOMETRY
     DECIMALS
-    COUNTRY
     ORDER
     QUEUE
     STACK
-    AREA
     ```
 
 3. Compile the Java files:
