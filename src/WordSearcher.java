@@ -1,7 +1,7 @@
 import java.util.*;
 
 public class WordSearcher {
-    private Map<Character, Vector<Character>> graph;
+    private final Map<Character, Vector<Character>> graph;
     private final char[][] matrix;
     private static final String ANSI_RESET = "\u001B[0m";
     private static final String ANSI_YELLOW = "\u001B[33m";
@@ -25,7 +25,7 @@ public class WordSearcher {
                     if (matrix[i][j] == startChar) {
                         // Perform DFS to check if the word exists starting from this position
                         List<int[]> path = new ArrayList<>();
-                        if (dfs(i, j, word, 0, new HashSet<>(), path)) {
+                        if (dfs(i, j, word, 0, new HashSet<>(), path, -1)) {
                             foundWords.add(word);
                             wordFound = true;
                             markFoundPath(path);
@@ -42,70 +42,41 @@ public class WordSearcher {
         return foundWords;
     }
 
-    private boolean dfs(int row, int col, String word, int index, Set<Character> visited, List<int[]> path) {
+    private boolean dfs(int row, int col, String word, int index, Set<String> visited, List<int[]> path, int direction) {
         if (index == word.length()) {
             return true;
         }
-    
+
         if (row < 0 || row >= matrix.length || col < 0 || col >= matrix[0].length ||
-            visited.contains(matrix[row][col]) || matrix[row][col] != word.charAt(index)) {
+            visited.contains(row + "," + col) || matrix[row][col] != word.charAt(index)) {
             return false;
         }
-    
-        visited.add(matrix[row][col]);
+
+        visited.add(row + "," + col);
         path.add(new int[]{row, col});
-    
-        int[] dRow = {-1, 1, 0, 0, -1, -1, 1, 1};
-        int[] dCol = {0, 0, -1, 1, -1, 1, -1, 1};
-    
-        if (index == 0) {
-            char firstChar = word.charAt(0);
-            for (int d = 0; d < 8; d++) {
-                if (dfs(row + dRow[d], col + dCol[d], word, 1, visited, path)) {
+
+        int[][] directions = {
+            {-1, 0}, {1, 0}, {0, -1}, {0, 1}, // Up, Down, Left, Right
+            {-1, -1}, {-1, 1}, {1, -1}, {1, 1} // Top-left, Top-right, Bottom-left, Bottom-right
+        };
+
+        if (direction == -1) { // If no direction yet, try all directions
+            for (int d = 0; d < directions.length; d++) {
+                if (dfs(row + directions[d][0], col + directions[d][1], word, index + 1, visited, path, d)) {
                     return true;
                 }
             }
-        } else if (index > 0 && index < path.size()) {
-            int currentDirection = getDirection(path.get(index), path.get(index - 1));
-            int d = currentDirection;
-            if (dfs(row + dRow[d], col + dCol[d], word, index + 1, visited, path)) {
+        } else { // Continue in the same direction
+            int[] dir = directions[direction];
+            if (dfs(row + dir[0], col + dir[1], word, index + 1, visited, path, direction)) {
                 return true;
             }
         }
-    
-        visited.remove(matrix[row][col]);
+
+        visited.remove(row + "," + col);
         path.remove(path.size() - 1);
-    
+
         return false;
-    }
-    
-    private int getDirection(int[] currentPos, int[] prevPos) {
-        if (prevPos == null || prevPos.length != 2) {
-            return -1; // Invalid direction
-        }
-    
-        int dRow = currentPos[0] - prevPos[0];
-        int dCol = currentPos[1] - prevPos[1];
-    
-        if (dRow == 0 && dCol == -1) {
-            return 2; // Left
-        } else if (dRow == 0 && dCol == 1) {
-            return 3; // Right
-        } else if (dRow == -1 && dCol == 0) {
-            return 0; // Up
-        } else if (dRow == 1 && dCol == 0) {
-            return 1; // Down
-        } else if (dRow == -1 && dCol == -1) {
-            return 4; // Top-left
-        } else if (dRow == -1 && dCol == 1) {
-            return 5; // Top-right
-        } else if (dRow == 1 && dCol == -1) {
-            return 6; // Bottom-left
-        } else if (dRow == 1 && dCol == 1) {
-            return 7; // Bottom-right
-        } else {
-            return -1; // Invalid direction
-        }
     }
 
     private void markFoundPath(List<int[]> path) {
