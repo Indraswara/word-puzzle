@@ -4,18 +4,16 @@ import java.io.IOException;
 import java.util.*;
 
 public class Parser {
-    private String filename;
-    private String filename_words;
-    private Map<Character, Vector<Character>> graph;
+    private final String filename;
+    private final String filename_words;
     private char[][] matrix;
 
     public Parser(String filename, String filename_words) {
         this.filename = filename;
         this.filename_words = filename_words;
-        this.graph = new HashMap<>();
     }
 
-    public Map<Character, Vector<Character>> buildGraph() throws IOException {
+    public void buildMatrix() throws IOException {
         try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
             List<String> lines = new ArrayList<>();
             String line;
@@ -32,53 +30,10 @@ public class Parser {
             for (int i = 0; i < numRows; i++) {
                 String cleanLine = lines.get(i).replaceAll("\\s+", "");
                 for (int j = 0; j < numCols; j++) {
-                    char currentNode = cleanLine.charAt(j);
-                    matrix[i][j] = currentNode;
-
-                    if (!graph.containsKey(currentNode)) {
-                        graph.put(currentNode, new Vector<>());
-                    }
-
-                    // Connect with horizontal and vertical neighbors
-                    if (j > 0) {
-                        char leftNode = cleanLine.charAt(j - 1);
-                        graph.get(currentNode).add(leftNode);
-                        if (!graph.containsKey(leftNode)) {
-                            graph.put(leftNode, new Vector<>());
-                        }
-                        graph.get(leftNode).add(currentNode); // undirected graph
-                    }
-                    if (i > 0) {
-                        char aboveNode = lines.get(i - 1).replaceAll("\\s+", "").charAt(j);
-                        graph.get(currentNode).add(aboveNode);
-                        if (!graph.containsKey(aboveNode)) {
-                            graph.put(aboveNode, new Vector<>());
-                        }
-                        graph.get(aboveNode).add(currentNode); // undirected graph
-                    }
-
-                    // Connect with diagonal neighbors (top-left and top-right)
-                    if (i > 0 && j > 0) {
-                        char topLeftNode = lines.get(i - 1).replaceAll("\\s+", "").charAt(j - 1);
-                        graph.get(currentNode).add(topLeftNode);
-                        if (!graph.containsKey(topLeftNode)) {
-                            graph.put(topLeftNode, new Vector<>());
-                        }
-                        graph.get(topLeftNode).add(currentNode); // undirected graph
-                    }
-                    if (i > 0 && j < numCols - 1) {
-                        char topRightNode = lines.get(i - 1).replaceAll("\\s+", "").charAt(j + 1);
-                        graph.get(currentNode).add(topRightNode);
-                        if (!graph.containsKey(topRightNode)) {
-                            graph.put(topRightNode, new Vector<>());
-                        }
-                        graph.get(topRightNode).add(currentNode); // undirected graph
-                    }
+                    matrix[i][j] = cleanLine.charAt(j);
                 }
             }
         }
-
-        return graph;
     }
     
     public List<String> generateWordsFromFile() {
@@ -87,7 +42,6 @@ public class Parser {
         try (BufferedReader br = new BufferedReader(new FileReader(filename_words))) {
             String line;
             while ((line = br.readLine()) != null) {
-                System.out.println(line);
                 wordList.add(line.trim());
             }
         } catch (IOException e) {
@@ -96,18 +50,23 @@ public class Parser {
 
         return wordList;
     }
+    
     public char[][] getMatrix() {
         return matrix;
     }
 
-
-    public static void main(String[] args){
-        try{
-            Parser parser = new Parser("../data/test.txt", "../data/test-words.txt"); 
-            parser.buildGraph();
-        }catch(Exception e){
+    public static void main(String[] args) {
+        try {
+            Parser parser = new Parser("test.txt", "test-words.txt"); 
+            parser.buildMatrix();
+            char[][] matrix = parser.getMatrix();
+            List<String> words = parser.generateWordsFromFile();
+            WordSearcher searcher = new WordSearcher(matrix);
+            List<String> foundWords = searcher.findWords(words);
+            System.out.println("Found Words: " + foundWords);
+            searcher.printMatrix();
+        } catch (IOException e) {
             System.err.println(e);
         }
     }
-
 }

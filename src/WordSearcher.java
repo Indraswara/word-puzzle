@@ -1,14 +1,12 @@
 import java.util.*;
 
 public class WordSearcher {
-    private Map<Character, Vector<Character>> graph;
     private final char[][] matrix;
     private static final String ANSI_RESET = "\u001B[0m";
     private static final String ANSI_YELLOW = "\u001B[33m";
     private static final String ANSI_CYAN = "\u001B[36m";
 
-    public WordSearcher(Map<Character, Vector<Character>> graph, char[][] matrix) {
-        this.graph = graph;
+    public WordSearcher(char[][] matrix) {
         this.matrix = matrix;
     }
 
@@ -16,21 +14,25 @@ public class WordSearcher {
         List<String> foundWords = new ArrayList<>();
 
         for (String word : words) {
-            char startChar = word.charAt(0);
             boolean wordFound = false;
 
             // Search for all occurrences of the starting character
             for (int i = 0; i < matrix.length; i++) {
                 for (int j = 0; j < matrix[0].length; j++) {
-                    if (matrix[i][j] == startChar) {
-                        // Perform DFS to check if the word exists starting from this position
-                        List<int[]> path = new ArrayList<>();
-                        if (dfs(i, j, word, 0, new HashSet<>(), path)) {
-                            foundWords.add(word);
-                            wordFound = true;
-                            markFoundPath(path);
-                            break; // Move to the next word
+                    if (matrix[i][j] == word.charAt(0)) {
+                        // Try all 8 possible directions
+                        for (int direction = 0; direction < 8; direction++) {
+                            List<int[]> path = new ArrayList<>();
+                            if (dfs(i, j, word, 0, path, direction)) {
+                                foundWords.add(word);
+                                wordFound = true;
+                                markFoundPath(path);
+                                break; // Move to the next word
+                            }
                         }
+                    }
+                    if (wordFound) {
+                        break; // Move to the next word
                     }
                 }
                 if (wordFound) {
@@ -42,70 +44,33 @@ public class WordSearcher {
         return foundWords;
     }
 
-    private boolean dfs(int row, int col, String word, int index, Set<Character> visited, List<int[]> path) {
+    private boolean dfs(int row, int col, String word, int index, List<int[]> path, int direction) {
         if (index == word.length()) {
             return true;
         }
-    
+
         if (row < 0 || row >= matrix.length || col < 0 || col >= matrix[0].length ||
-            visited.contains(matrix[row][col]) || matrix[row][col] != word.charAt(index)) {
+            matrix[row][col] != word.charAt(index)) {
             return false;
         }
-    
-        visited.add(matrix[row][col]);
+
         path.add(new int[]{row, col});
-    
-        int[] dRow = {-1, 1, 0, 0, -1, -1, 1, 1};
-        int[] dCol = {0, 0, -1, 1, -1, 1, -1, 1};
-    
-        if (index == 0) {
-            char firstChar = word.charAt(0);
-            for (int d = 0; d < 8; d++) {
-                if (dfs(row + dRow[d], col + dCol[d], word, 1, visited, path)) {
-                    return true;
-                }
-            }
-        } else if (index > 0 && index < path.size()) {
-            int currentDirection = getDirection(path.get(index), path.get(index - 1));
-            int d = currentDirection;
-            if (dfs(row + dRow[d], col + dCol[d], word, index + 1, visited, path)) {
-                return true;
-            }
+
+        int[][] directions = {
+            {-1, 0}, {1, 0}, {0, -1}, {0, 1}, // Up, Down, Left, Right
+            {-1, -1}, {-1, 1}, {1, -1}, {1, 1} // Top-left, Top-right, Bottom-left, Bottom-right
+        };
+
+        int newRow = row + directions[direction][0];
+        int newCol = col + directions[direction][1];
+
+        if (dfs(newRow, newCol, word, index + 1, path, direction)) {
+            return true;
         }
-    
-        visited.remove(matrix[row][col]);
+
         path.remove(path.size() - 1);
-    
+
         return false;
-    }
-    
-    private int getDirection(int[] currentPos, int[] prevPos) {
-        if (prevPos == null || prevPos.length != 2) {
-            return -1; // Invalid direction
-        }
-    
-        int dRow = currentPos[0] - prevPos[0];
-        int dCol = currentPos[1] - prevPos[1];
-    
-        if (dRow == 0 && dCol == -1) {
-            return 2; // Left
-        } else if (dRow == 0 && dCol == 1) {
-            return 3; // Right
-        } else if (dRow == -1 && dCol == 0) {
-            return 0; // Up
-        } else if (dRow == 1 && dCol == 0) {
-            return 1; // Down
-        } else if (dRow == -1 && dCol == -1) {
-            return 4; // Top-left
-        } else if (dRow == -1 && dCol == 1) {
-            return 5; // Top-right
-        } else if (dRow == 1 && dCol == -1) {
-            return 6; // Bottom-left
-        } else if (dRow == 1 && dCol == 1) {
-            return 7; // Bottom-right
-        } else {
-            return -1; // Invalid direction
-        }
     }
 
     private void markFoundPath(List<int[]> path) {
@@ -117,13 +82,12 @@ public class WordSearcher {
     }
 
     public void printMatrix() {
-        for (char[] matrix1 : matrix) {
-            for (int j = 0; j < matrix[0].length; j++) {
-                char currentChar = matrix1[j];
-                if (Character.isLowerCase(currentChar)) {
-                    System.out.print(ANSI_YELLOW + Character.toUpperCase(currentChar) + " " + ANSI_RESET);
+        for (char[] row : matrix) {
+            for (char cell : row) {
+                if (Character.isLowerCase(cell)) {
+                    System.out.print(ANSI_YELLOW + Character.toUpperCase(cell) + " " + ANSI_RESET);
                 } else {
-                    System.out.print(ANSI_CYAN + Character.toUpperCase(currentChar) + " " + ANSI_RESET);
+                    System.out.print(ANSI_CYAN + cell + " " + ANSI_RESET);
                 }
             }
             System.out.println();
